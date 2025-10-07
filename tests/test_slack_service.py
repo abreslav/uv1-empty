@@ -8,6 +8,7 @@ be skipped to maintain external API testing integrity.
 import pytest
 import os
 from django.test import TestCase
+from unittest.mock import patch, MagicMock
 from django_app.slack_service import SlackService
 
 
