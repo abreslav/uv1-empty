@@ -121,6 +121,10 @@
             {
                 "checkpoint": "{\"run\":{\"id\":\"5151dae0-72e3-4738-a6e3-3834e5c42b7d\",\"kind\":\"change_request\"},\"phase_id\":\"ProcessChangeRequest\",\"additional_id\":null}",
                 "timestamp": "2025-10-07T16:56:49.599192+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"5151dae0-72e3-4738-a6e3-3834e5c42b7d\",\"kind\":\"change_request\"},\"phase_id\":\"CheckChangeRequestsContradictions\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T16:56:52.988360+00:00"
             }
         ]
     }
