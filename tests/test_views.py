@@ -129,6 +129,34 @@ class TokenViewTestCase(TestCase):
         # Should not create token
         self.assertEqual(SlackToken.objects.count(), 0)
 
+    @pytest.mark.timeout(30)
+    @patch('django_app.views.SlackService')
+    def test_token_view_post_no_name_provided(self, mock_slack_service_class):
+        """Test kind: endpoint_tests - TokenView.post without name to cover line 43"""
+        # Mock successful auth test
+        mock_slack_service = MagicMock()
+        mock_slack_service.test_auth.return_value = {
+            'success': True,
+            'data': {
+                'team': 'Test Team',
+                'user': 'testuser'
+            }
+        }
+        mock_slack_service_class.return_value = mock_slack_service
+
+        response = self.client.post('/token/', {
+            'token': 'xoxb-test-token',
+            'name': ''  # Empty name should trigger default name generation
+        })
+
+        # Should redirect to home
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/')
+
+        # Should create token with default name
+        token = SlackToken.objects.get(token='xoxb-test-token')
+        self.assertEqual(token.name, 'Token 1')  # Default name based on count
+
 
 class ChannelsViewTestCase(TestCase):
     """Test cases for ChannelsView endpoint."""
@@ -356,6 +384,22 @@ class PostMessageViewTestCase(TestCase):
             'token_id': self.token.id,
             'channel_id': 'C123456789'
             # Missing message_text and channel_name
+        })
+
+        # Should redirect to home
+        self.assertEqual(response.status_code, 302)
+
+        # Should not create message
+        self.assertEqual(SlackMessage.objects.count(), 0)
+
+    @pytest.mark.timeout(30)
+    def test_post_message_view_post_invalid_token_id(self):
+        """Test kind: endpoint_tests - PostMessageView.post with invalid token_id to cover lines 111-113"""
+        response = self.client.post('/post-message/', {
+            'token_id': 99999,  # Non-existent token ID
+            'channel_id': 'C123456789',
+            'channel_name': 'general',
+            'message_text': 'Test message'
         })
 
         # Should redirect to home
