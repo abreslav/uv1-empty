@@ -1,6 +1,7 @@
 """
 Tests for SlackService logging functionality.
 """
+import pytest
 import unittest
 from unittest.mock import Mock, patch, MagicMock
 from slack_sdk.errors import SlackApiError
@@ -125,6 +126,46 @@ class SlackServiceLoggingTestCase(unittest.TestCase):
         channels = result['channels']
         self.assertEqual(len(channels), 1)
         self.assertEqual(channels[0]['name'], "@user_U987654321")
+
+    @pytest.mark.timeout(30)
+    @patch('django_app.slack_service.logger')
+    def test_get_channels_logs_unexpected_error(self, mock_logger):
+        """Test that unexpected errors in get_channels are properly logged."""
+        # Mock the Slack client to raise a generic exception
+        with patch.object(self.slack_service.client, 'conversations_list', side_effect=ValueError("Connection error")):
+            result = self.slack_service.get_channels()
+
+        # Verify the error was logged
+        mock_logger.error.assert_called_once()
+        log_call = mock_logger.error.call_args[0][0]
+        self.assertIn("Unexpected error during get_channels", log_call)
+        self.assertIn("Connection error", log_call)
+
+        # Verify the method still returns proper error format
+        self.assertFalse(result['success'])
+        self.assertIn('error', result)
+        self.assertIn("Unexpected error", result['error'])
+
+    @pytest.mark.timeout(30)
+    @patch('django_app.slack_service.logger')
+    def test_post_message_logs_unexpected_error(self, mock_logger):
+        """Test that unexpected errors in post_message are properly logged."""
+        # Mock the Slack client to raise a generic exception
+        channel_id = "C123456789"
+
+        with patch.object(self.slack_service.client, 'chat_postMessage', side_effect=ValueError("Connection error")):
+            result = self.slack_service.post_message(channel_id, "test message")
+
+        # Verify the error was logged with channel context
+        mock_logger.error.assert_called_once()
+        log_call = mock_logger.error.call_args[0][0]
+        self.assertIn(f"Unexpected error during post_message to channel {channel_id}", log_call)
+        self.assertIn("Connection error", log_call)
+
+        # Verify the method still returns proper error format
+        self.assertFalse(result['success'])
+        self.assertIn('error', result)
+        self.assertIn("Unexpected error", result['error'])
 
 
 if __name__ == '__main__':
