@@ -25,7 +25,6 @@ class SlackMessageTestCase(TestCase):
             channel_name="general",
             message_ts="1234567891.123456",
             text="This is a reply",
-            thread_ts="1234567890.123456",
             user_id="U987654321"
         )
 

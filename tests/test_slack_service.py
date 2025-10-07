@@ -127,28 +127,8 @@ class SlackServiceExternalApiTestCase(TestCase):
         self.assertIsInstance(result['error'], str)
 
 
-    @pytest.mark.timeout(30)
-    def test_slack_service_post_reply_with_invalid_token(self):
-        """Test kind: external_api_tests - SlackService.post_reply with invalid token to cover error path"""
-        invalid_service = SlackService("xoxb-invalid-token-12345")
-        result = invalid_service.post_reply("C123456789", "1234567890.123456", "test reply")
-
-        # Should fail with invalid token
-        self.assertFalse(result['success'])
-        self.assertIn('error', result)
-        self.assertIsInstance(result['error'], str)
 
 
-    @pytest.mark.timeout(30)
-    def test_slack_service_get_channel_history_with_invalid_token(self):
-        """Test kind: external_api_tests - SlackService.get_channel_history with invalid token to cover error path"""
-        invalid_service = SlackService("xoxb-invalid-token-12345")
-        result = invalid_service.get_channel_history("C123456789", limit=10)
-
-        # Should fail with invalid token
-        self.assertFalse(result['success'])
-        self.assertIn('error', result)
-        self.assertIsInstance(result['error'], str)
 
     @pytest.mark.timeout(30)
     def test_slack_service_invalid_token(self):

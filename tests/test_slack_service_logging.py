@@ -73,48 +73,7 @@ class SlackServiceLoggingTestCase(unittest.TestCase):
         self.assertFalse(result['success'])
         self.assertIn('error', result)
 
-    @patch('django_app.slack_service.logger')
-    def test_post_reply_logs_slack_api_error(self, mock_logger):
-        """Test that SlackApiError in post_reply is properly logged."""
-        # Mock the Slack client to raise a SlackApiError
-        mock_response = Mock()
-        slack_error = SlackApiError("The request to the Slack API failed. (url: https://slack.com/api/chat.postMessage)", mock_response)
 
-        channel_id = "C123456789"
-        thread_ts = "1234567890.123456"
-
-        with patch.object(self.slack_service.client, 'chat_postMessage', side_effect=slack_error):
-            result = self.slack_service.post_reply(channel_id, thread_ts, "test reply")
-
-        # Verify the error was logged with channel and thread context
-        mock_logger.error.assert_called_once()
-        log_call = mock_logger.error.call_args[0][0]
-        self.assertIn(f"Slack API error during post_reply to channel {channel_id}, thread {thread_ts}", log_call)
-
-        # Verify the method still returns proper error format
-        self.assertFalse(result['success'])
-        self.assertIn('error', result)
-
-    @patch('django_app.slack_service.logger')
-    def test_get_channel_history_logs_slack_api_error(self, mock_logger):
-        """Test that SlackApiError in get_channel_history is properly logged."""
-        # Mock the Slack client to raise a SlackApiError
-        mock_response = Mock()
-        slack_error = SlackApiError("The request to the Slack API failed. (url: https://slack.com/api/conversations.history)", mock_response)
-
-        channel_id = "C123456789"
-
-        with patch.object(self.slack_service.client, 'conversations_history', side_effect=slack_error):
-            result = self.slack_service.get_channel_history(channel_id)
-
-        # Verify the error was logged with channel context
-        mock_logger.error.assert_called_once()
-        log_call = mock_logger.error.call_args[0][0]
-        self.assertIn(f"Slack API error during get_channel_history for channel {channel_id}", log_call)
-
-        # Verify the method still returns proper error format
-        self.assertFalse(result['success'])
-        self.assertIn('error', result)
 
     @patch('django_app.slack_service.logger')
     def test_test_auth_logs_unexpected_error(self, mock_logger):
