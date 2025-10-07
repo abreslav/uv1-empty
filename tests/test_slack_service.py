@@ -1,5 +1,9 @@
 """
 External API tests for django_app slack_service.
+
+Note: These tests require real Slack API access. Set SLACK_API_TOKEN
+environment variable to enable full testing. Without it, tests will
+be skipped to maintain external API testing integrity.
 """
 import pytest
 import os
