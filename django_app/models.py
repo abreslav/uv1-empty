@@ -10,12 +10,15 @@ class SlackMessage(models.Model):
     message_ts = models.CharField(max_length=20, unique=True, help_text="Slack message timestamp")
     text = models.TextField(help_text="Message text content")
     user_id = models.CharField(max_length=20, help_text="User ID who sent the message")
+    thread_ts = models.CharField(max_length=20, blank=True, null=True, help_text="Thread timestamp if this is a reply")
+    is_thread_reply = models.BooleanField(default=False, help_text="Whether this message is a thread reply")
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['channel_id']),
+            models.Index(fields=['thread_ts']),
         ]
 
     def __str__(self):

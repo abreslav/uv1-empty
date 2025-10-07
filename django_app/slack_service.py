@@ -136,4 +136,29 @@ class SlackService:
                 'error': f"Unexpected error: {str(e)}"
             }
 
+    def post_thread_reply(self, channel_id: str, thread_ts: str, text: str) -> Dict[str, Any]:
+        """Post a reply to a thread."""
+        try:
+            response = self.client.chat_postMessage(
+                channel=channel_id,
+                text=text,
+                thread_ts=thread_ts
+            )
+            return {
+                'success': True,
+                'message': response.data
+            }
+        except SlackApiError as e:
+            logger.error(f"Slack API error during post_thread_reply to channel {channel_id}, thread {thread_ts}: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error during post_thread_reply to channel {channel_id}, thread {thread_ts}: {str(e)}")
+            return {
+                'success': False,
+                'error': f"Unexpected error: {str(e)}"
+            }
+
 

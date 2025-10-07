@@ -43,6 +43,15 @@
                 "enclosing_classes": [
                     "SlackService"
                 ],
+                "method_name": "post_thread_reply"
+            },
+            "kind": "external_api_tests"
+        },
+        {
+            "method": {
+                "enclosing_classes": [
+                    "SlackService"
+                ],
                 "method_name": "test_auth"
             },
             "kind": "external_api_tests"
@@ -80,6 +89,15 @@
             "method": {
                 "enclosing_classes": [
                     "PostMessageView"
+                ],
+                "method_name": "post"
+            },
+            "kind": "endpoint_tests"
+        },
+        {
+            "method": {
+                "enclosing_classes": [
+                    "PostThreadReplyView"
                 ],
                 "method_name": "post"
             },

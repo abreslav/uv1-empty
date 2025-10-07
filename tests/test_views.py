@@ -335,3 +335,135 @@ class PostMessageViewTestCase(TestCase):
         self.assertEqual(SlackMessage.objects.count(), 0)
 
 
+class PostThreadReplyViewTestCase(TestCase):
+    """Test cases for PostThreadReplyView endpoint."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.client = Client()
+        self.token = SlackToken.objects.create(
+            name="Test Token",
+            token="xoxb-test-token",
+            team_name="Test Team",
+            user_name="testuser"
+        )
+        # Create an original message to reply to
+        self.original_message = SlackMessage.objects.create(
+            channel_id="C123456789",
+            channel_name="general",
+            message_ts="1234567890.123456",
+            text="Original message",
+            user_id="U123456789"
+        )
+
+    @pytest.mark.timeout(30)
+    @patch('django_app.views.SlackService')
+    def test_post_thread_reply_view_post_success(self, mock_slack_service_class):
+        """Test kind: endpoint_tests - PostThreadReplyView.post"""
+        # Mock successful thread reply post
+        mock_slack_service = MagicMock()
+        mock_slack_service.post_thread_reply.return_value = {
+            'success': True,
+            'message': {
+                'ts': '1234567891.123456',
+                'channel': 'C123456789',
+                'user': 'U999999999',
+                'thread_ts': '1234567890.123456'
+            }
+        }
+        mock_slack_service_class.return_value = mock_slack_service
+
+        response = self.client.post('/post-thread-reply/', {
+            'token_id': self.token.id,
+            'channel_id': 'C123456789',
+            'thread_ts': '1234567890.123456',
+            'reply_text': 'Test reply message'
+        })
+
+        # Should redirect to home
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/')
+
+        # Should create thread reply message in database
+        thread_reply = SlackMessage.objects.get(message_ts='1234567891.123456')
+        self.assertEqual(thread_reply.channel_id, 'C123456789')
+        self.assertEqual(thread_reply.channel_name, 'general')  # Should use original message's channel name
+        self.assertEqual(thread_reply.text, 'Test reply message')
+        self.assertEqual(thread_reply.user_id, 'U999999999')
+        self.assertEqual(thread_reply.thread_ts, '1234567890.123456')
+        self.assertTrue(thread_reply.is_thread_reply)
+
+    @pytest.mark.timeout(30)
+    @patch('django_app.views.SlackService')
+    def test_post_thread_reply_view_post_failure(self, mock_slack_service_class):
+        """Test kind: endpoint_tests - PostThreadReplyView.post with API failure"""
+        # Mock failed thread reply post
+        mock_slack_service = MagicMock()
+        mock_slack_service.post_thread_reply.return_value = {
+            'success': False,
+            'error': 'channel_not_found'
+        }
+        mock_slack_service_class.return_value = mock_slack_service
+
+        response = self.client.post('/post-thread-reply/', {
+            'token_id': self.token.id,
+            'channel_id': 'C123456789',
+            'thread_ts': '1234567890.123456',
+            'reply_text': 'Test reply message'
+        })
+
+        # Should redirect to home
+        self.assertEqual(response.status_code, 302)
+
+        # Should not create thread reply message in database (original message should still exist)
+        self.assertEqual(SlackMessage.objects.count(), 1)  # Only original message
+        self.assertEqual(SlackMessage.objects.first(), self.original_message)
+
+    @pytest.mark.timeout(30)
+    def test_post_thread_reply_view_post_missing_fields(self):
+        """Test kind: endpoint_tests - PostThreadReplyView.post with missing fields"""
+        response = self.client.post('/post-thread-reply/', {
+            'token_id': self.token.id,
+            'channel_id': 'C123456789'
+            # Missing thread_ts and reply_text
+        })
+
+        # Should redirect to home
+        self.assertEqual(response.status_code, 302)
+
+        # Should not create thread reply message (original message should still exist)
+        self.assertEqual(SlackMessage.objects.count(), 1)  # Only original message
+
+    @pytest.mark.timeout(30)
+    def test_post_thread_reply_view_post_invalid_token_id(self):
+        """Test kind: endpoint_tests - PostThreadReplyView.post with invalid token_id"""
+        response = self.client.post('/post-thread-reply/', {
+            'token_id': 99999,  # Non-existent token ID
+            'channel_id': 'C123456789',
+            'thread_ts': '1234567890.123456',
+            'reply_text': 'Test reply message'
+        })
+
+        # Should redirect to home
+        self.assertEqual(response.status_code, 302)
+
+        # Should not create thread reply message (original message should still exist)
+        self.assertEqual(SlackMessage.objects.count(), 1)  # Only original message
+
+    @pytest.mark.timeout(30)
+    def test_post_thread_reply_view_post_original_message_not_found(self):
+        """Test kind: endpoint_tests - PostThreadReplyView.post with non-existent original message"""
+        response = self.client.post('/post-thread-reply/', {
+            'token_id': self.token.id,
+            'channel_id': 'C123456789',
+            'thread_ts': '9999999999.999999',  # Non-existent thread timestamp
+            'reply_text': 'Test reply message'
+        })
+
+        # Should redirect to home
+        self.assertEqual(response.status_code, 302)
+
+        # Should not create thread reply message (original message should still exist)
+        self.assertEqual(SlackMessage.objects.count(), 1)  # Only original message
+
+
