@@ -35,6 +35,12 @@
                 "type": "file",
                 "relative_path": "sha_to_checkpoint.json",
                 "format": "json"
+            },
+            "implemented_change_requests": {
+                "type": "file",
+                "relative_path": "implemented_change_requests.json",
+                "format": "json",
+                "by_phase": "ImplementChangeRequest"
             }
         },
         "version": "0.2.0"
@@ -106,6 +112,10 @@
             {
                 "checkpoint": "{\"run\":{\"id\":\"989dbcab-480f-4fec-a36c-2d713eaa134a\",\"kind\":\"build\"},\"phase_id\":\"Done\",\"additional_id\":null}",
                 "timestamp": "2025-10-07T16:44:49.481799+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"5151dae0-72e3-4738-a6e3-3834e5c42b7d\",\"kind\":\"change_request\"},\"phase_id\":\"Init\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T16:56:49.579296+00:00"
             }
         ]
     }
