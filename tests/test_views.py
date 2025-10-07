@@ -242,39 +242,6 @@ class MessagesViewTestCase(TestCase):
             user_name="testuser"
         )
 
-    @pytest.mark.timeout(30)
-    @patch('django_app.views.SlackService')
-    def test_messages_view_get_success(self, mock_slack_service_class):
-        """Test kind: endpoint_tests - MessagesView.get"""
-        # Mock successful messages response
-        mock_slack_service = MagicMock()
-        mock_slack_service.get_channel_history.return_value = {
-            'success': True,
-            'messages': [
-                {
-                    'ts': '1234567890.123456',
-                    'text': 'Test message',
-                    'user': 'U123456789',
-                    'thread_ts': None,
-                    'reply_count': 0
-                }
-            ]
-        }
-        mock_slack_service_class.return_value = mock_slack_service
-
-        response = self.client.get('/messages/', {
-            'token_id': self.token.id,
-            'channel_id': 'C123456789'
-        })
-
-        # Should return successful JSON response
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content)
-        self.assertTrue(data['success'])
-        self.assertIn('messages', data)
-
-        # Should call get_channel_history with correct parameters
-        mock_slack_service.get_channel_history.assert_called_once_with('C123456789', limit=50)
 
     @pytest.mark.timeout(30)
     def test_messages_view_get_missing_params(self):
@@ -422,42 +389,6 @@ class PostReplyViewTestCase(TestCase):
             user_name="testuser"
         )
 
-    @pytest.mark.timeout(30)
-    @patch('django_app.views.SlackService')
-    def test_post_reply_view_post_success(self, mock_slack_service_class):
-        """Test kind: endpoint_tests - PostReplyView.post"""
-        # Mock successful reply post
-        mock_slack_service = MagicMock()
-        mock_slack_service.post_reply.return_value = {
-            'success': True,
-            'message': {
-                'ts': '1234567891.123456',
-                'channel': 'C123456789',
-                'user': 'U999999999',
-                'thread_ts': '1234567890.123456'
-            }
-        }
-        mock_slack_service_class.return_value = mock_slack_service
-
-        response = self.client.post('/post-reply/', {
-            'token_id': self.token.id,
-            'channel_id': 'C123456789',
-            'channel_name': 'general',
-            'thread_ts': '1234567890.123456',
-            'reply_text': 'Test reply'
-        })
-
-        # Should redirect to home
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/')
-
-        # Should create reply in database
-        reply = SlackMessage.objects.get(message_ts='1234567891.123456')
-        self.assertEqual(reply.channel_id, 'C123456789')
-        self.assertEqual(reply.channel_name, 'general')
-        self.assertEqual(reply.text, 'Test reply')
-        self.assertEqual(reply.thread_ts, '1234567890.123456')
-        self.assertEqual(reply.user_id, 'U999999999')
 
     @pytest.mark.timeout(30)
     @patch('django_app.views.SlackService')

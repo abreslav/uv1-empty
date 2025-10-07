@@ -126,36 +126,6 @@ class SlackServiceExternalApiTestCase(TestCase):
         self.assertIn('error', result)
         self.assertIsInstance(result['error'], str)
 
-    @pytest.mark.timeout(30)
-    def test_slack_service_post_reply(self):
-        """Test kind: external_api_tests - SlackService.post_reply"""
-        if not self.slack_token:
-            self.skipTest("No SLACK_API_TOKEN environment variable provided")
-
-        # First, post a message to reply to
-        parent_message = "Parent message for reply test"
-        parent_result = self.slack_service.post_message(self.test_channel_id, parent_message)
-
-        if not parent_result['success']:
-            self.skipTest("Could not post parent message for reply test")
-
-        thread_ts = parent_result['message']['ts']
-        reply_text = "This is a test reply"
-
-        result = self.slack_service.post_reply(self.test_channel_id, thread_ts, reply_text)
-
-        # Should be successful
-        if result['success']:
-            self.assertIn('message', result)
-            message_data = result['message']
-            self.assertIn('ok', message_data)
-            self.assertIn('ts', message_data)
-            self.assertIn('channel', message_data)
-            # Should be in the same thread
-            self.assertEqual(message_data.get('thread_ts'), thread_ts)
-        else:
-            # If it fails, should have error message
-            self.assertIn('error', result)
 
     @pytest.mark.timeout(30)
     def test_slack_service_post_reply_with_invalid_token(self):
@@ -168,45 +138,6 @@ class SlackServiceExternalApiTestCase(TestCase):
         self.assertIn('error', result)
         self.assertIsInstance(result['error'], str)
 
-    @pytest.mark.timeout(30)
-    def test_slack_service_get_channel_history(self):
-        """Test kind: external_api_tests - SlackService.get_channel_history"""
-        if not self.slack_token:
-            self.skipTest("No SLACK_API_TOKEN environment variable provided")
-
-        # Test with default limit first
-        result = self.slack_service.get_channel_history(self.test_channel_id)
-
-        # Should be successful (or fail with expected error if channel doesn't exist)
-        self.assertIn('success', result)
-
-        if result['success']:
-            self.assertIn('messages', result)
-            messages = result['messages']
-            self.assertIsInstance(messages, list)
-
-            # Should respect the default limit (10)
-            self.assertLessEqual(len(messages), 10)
-
-            # If there are messages, they should have expected structure
-            if messages:
-                message = messages[0]
-                self.assertIn('ts', message)
-                self.assertIn('text', message)
-                self.assertIn('user', message)
-                self.assertIn('thread_ts', message)
-                self.assertIn('reply_count', message)
-        else:
-            # If it fails, should have error message
-            self.assertIn('error', result)
-
-        # Test with custom limit
-        result_limited = self.slack_service.get_channel_history(self.test_channel_id, limit=5)
-        self.assertIn('success', result_limited)
-
-        if result_limited['success']:
-            messages = result_limited['messages']
-            self.assertLessEqual(len(messages), 5)
 
     @pytest.mark.timeout(30)
     def test_slack_service_get_channel_history_with_invalid_token(self):

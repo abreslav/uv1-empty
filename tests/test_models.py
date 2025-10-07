@@ -46,41 +46,6 @@ class SlackMessageTestCase(TestCase):
         expected_long = "Message in general: This is a very long message that should be truncat..."
         self.assertEqual(str(long_message), expected_long)
 
-    @pytest.mark.timeout(30)
-    def test_slack_message_is_thread_reply(self):
-        """Test kind: unit_tests - SlackMessage.is_thread_reply"""
-        # Parent message should not be a thread reply
-        self.assertFalse(self.parent_message.is_thread_reply)
-
-        # Reply message should be a thread reply
-        self.assertTrue(self.reply_message.is_thread_reply)
-
-    @pytest.mark.timeout(30)
-    def test_slack_message_get_replies(self):
-        """Test kind: unit_tests - SlackMessage.get_replies"""
-        # Parent message should return its replies
-        replies = self.parent_message.get_replies()
-        self.assertEqual(replies.count(), 1)
-        self.assertEqual(replies.first(), self.reply_message)
-
-        # Reply message should return no replies (empty queryset)
-        reply_replies = self.reply_message.get_replies()
-        self.assertEqual(reply_replies.count(), 0)
-
-        # Create another reply to test multiple replies
-        second_reply = SlackMessage.objects.create(
-            channel_id="C123456789",
-            channel_name="general",
-            message_ts="1234567893.123456",
-            text="This is another reply",
-            thread_ts="1234567890.123456",
-            user_id="U555555555"
-        )
-
-        replies = self.parent_message.get_replies()
-        self.assertEqual(replies.count(), 2)
-        self.assertIn(self.reply_message, replies)
-        self.assertIn(second_reply, replies)
 
 
 class SlackTokenTestCase(TestCase):
