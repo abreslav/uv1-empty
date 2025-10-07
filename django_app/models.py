@@ -9,12 +9,6 @@ class SlackMessage(models.Model):
     channel_name = models.CharField(max_length=100, help_text="Slack channel name")
     message_ts = models.CharField(max_length=20, unique=True, help_text="Slack message timestamp")
     text = models.TextField(help_text="Message text content")
-    thread_ts = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True,
-        help_text="Parent thread timestamp if this is a reply"
-    )
     user_id = models.CharField(max_length=20, help_text="User ID who sent the message")
     created_at = models.DateTimeField(default=timezone.now)
 
@@ -22,22 +16,10 @@ class SlackMessage(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['channel_id']),
-            models.Index(fields=['thread_ts']),
         ]
 
     def __str__(self):
         return f"Message in {self.channel_name}: {self.text[:50]}..."
-
-    @property
-    def is_thread_reply(self):
-        """Check if this message is a reply in a thread."""
-        return self.thread_ts is not None
-
-    def get_replies(self):
-        """Get all replies to this message if it's a parent message."""
-        if self.thread_ts:
-            return SlackMessage.objects.none()  # This is already a reply
-        return SlackMessage.objects.filter(thread_ts=self.message_ts)
 
 
 class SlackToken(models.Model):

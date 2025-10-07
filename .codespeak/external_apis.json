@@ -9,10 +9,6 @@
             {
                 "description": "Post a message to a selected channel",
                 "spec_source_quote": "post a message to the selected channel"
-            },
-            {
-                "description": "Post a reply in a thread for a previously posted message",
-                "spec_source_quote": "post a reply in a thread for a previously posted message"
             }
         ],
         "config_parameters": [

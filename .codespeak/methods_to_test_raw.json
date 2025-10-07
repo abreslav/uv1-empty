@@ -17,36 +17,9 @@
                 "method_name": "__str__"
             },
             "kind": "unit_tests"
-        },
-        {
-            "method": {
-                "enclosing_classes": [
-                    "SlackMessage"
-                ],
-                "method_name": "get_replies"
-            },
-            "kind": "unit_tests"
-        },
-        {
-            "method": {
-                "enclosing_classes": [
-                    "SlackMessage"
-                ],
-                "method_name": "is_thread_reply"
-            },
-            "kind": "unit_tests"
         }
     ],
     "django_app/slack_service.py": [
-        {
-            "method": {
-                "enclosing_classes": [
-                    "SlackService"
-                ],
-                "method_name": "get_channel_history"
-            },
-            "kind": "external_api_tests"
-        },
         {
             "method": {
                 "enclosing_classes": [
@@ -62,15 +35,6 @@
                     "SlackService"
                 ],
                 "method_name": "post_message"
-            },
-            "kind": "external_api_tests"
-        },
-        {
-            "method": {
-                "enclosing_classes": [
-                    "SlackService"
-                ],
-                "method_name": "post_reply"
             },
             "kind": "external_api_tests"
         },
@@ -108,15 +72,6 @@
         {
             "method": {
                 "enclosing_classes": [
-                    "MessagesView"
-                ],
-                "method_name": "get"
-            },
-            "kind": "endpoint_tests"
-        },
-        {
-            "method": {
-                "enclosing_classes": [
                     "TokenView"
                 ],
                 "method_name": "post"
@@ -127,15 +82,6 @@
             "method": {
                 "enclosing_classes": [
                     "PostMessageView"
-                ],
-                "method_name": "post"
-            },
-            "kind": "endpoint_tests"
-        },
-        {
-            "method": {
-                "enclosing_classes": [
-                    "PostReplyView"
                 ],
                 "method_name": "post"
             },
