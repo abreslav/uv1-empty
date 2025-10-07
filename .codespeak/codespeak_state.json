@@ -154,6 +154,10 @@
             {
                 "checkpoint": "{\"run\":{\"id\":\"45b0d668-ffae-43b8-9e2b-63012f8d6129\",\"kind\":\"change_request\"},\"phase_id\":\"Done\",\"additional_id\":null}",
                 "timestamp": "2025-10-07T17:06:37.130259+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"d1ba51e8-e267-4ec6-a9d0-c777e5973f5c\",\"kind\":\"build\"},\"phase_id\":\"Init\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T17:27:13.938043+00:00"
             }
         ]
     }
