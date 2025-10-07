@@ -1,0 +1,31 @@
+[
+    {
+        "name": "slack",
+        "use_cases": [
+            {
+                "description": "Retrieve list of all channels in a Slack workspace",
+                "spec_source_quote": "choose a channel to post to from the list of all channels"
+            },
+            {
+                "description": "Post a message to a selected channel",
+                "spec_source_quote": "post a message to the selected channel"
+            },
+            {
+                "description": "Post a reply in a thread for a previously posted message",
+                "spec_source_quote": "post a reply in a thread for a previously posted message"
+            }
+        ],
+        "config_parameters": [
+            {
+                "name": "SLACK_ACCESS_TOKEN",
+                "kind": "token",
+                "guidance": "To obtain a Slack access token:\n\n1. Go to https://api.slack.com/apps and click 'Create New App'\n2. Choose 'From scratch' and provide an app name and select your workspace\n3. In the app settings, go to 'OAuth & Permissions' in the left sidebar\n4. Under 'Scopes', add the following Bot Token Scopes:\n   - channels:read (to list channels)\n   - chat:write (to post messages)\n   - chat:write.public (to post to public channels)\n5. Click 'Install to Workspace' at the top of the OAuth & Permissions page\n6. Authorize the app for your workspace\n7. Copy the 'Bot User OAuth Token' that starts with 'xoxb-'\n\nNote: This token will be entered through the UI as mentioned in the user stories, but you may want to set a default token for testing purposes.",
+                "default": null
+            }
+        ],
+        "sdk_choice": {
+            "kind": "existing",
+            "uv_package_name": "slack-sdk"
+        }
+    }
+]
