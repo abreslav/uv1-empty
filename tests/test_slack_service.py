@@ -170,7 +170,8 @@ class SlackServiceExternalApiTestCase(TestCase):
         if not self.slack_token:
             self.skipTest("No SLACK_API_TOKEN environment variable provided")
 
-        result = self.slack_service.get_channel_history(self.test_channel_id, limit=5)
+        # Test with default limit first
+        result = self.slack_service.get_channel_history(self.test_channel_id)
 
         # Should be successful (or fail with expected error if channel doesn't exist)
         self.assertIn('success', result)
@@ -180,8 +181,8 @@ class SlackServiceExternalApiTestCase(TestCase):
             messages = result['messages']
             self.assertIsInstance(messages, list)
 
-            # Should respect the limit
-            self.assertLessEqual(len(messages), 5)
+            # Should respect the default limit (10)
+            self.assertLessEqual(len(messages), 10)
 
             # If there are messages, they should have expected structure
             if messages:
@@ -194,6 +195,14 @@ class SlackServiceExternalApiTestCase(TestCase):
         else:
             # If it fails, should have error message
             self.assertIn('error', result)
+
+        # Test with custom limit
+        result_limited = self.slack_service.get_channel_history(self.test_channel_id, limit=5)
+        self.assertIn('success', result_limited)
+
+        if result_limited['success']:
+            messages = result_limited['messages']
+            self.assertLessEqual(len(messages), 5)
 
     @pytest.mark.timeout(30)
     def test_slack_service_get_channel_history_with_invalid_token(self):
