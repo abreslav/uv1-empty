@@ -177,6 +177,23 @@ class SlackServiceExternalApiTestCase(TestCase):
         self.assertIsInstance(result['error'], str)
 
     @pytest.mark.timeout(30)
+    @patch('django_app.slack_service.WebClient')
+    def test_slack_service_post_thread_reply_generic_exception(self, mock_webclient_class):
+        """Test kind: external_api_tests - SlackService.post_thread_reply with generic exception to cover lines 157-159"""
+        # Mock WebClient to raise a generic exception
+        mock_client = MagicMock()
+        mock_client.chat_postMessage.side_effect = Exception("Generic error")
+        mock_webclient_class.return_value = mock_client
+
+        service = SlackService("test-token")
+        result = service.post_thread_reply("C123456789", "1234567890.123456", "test reply")
+
+        # Should fail with generic exception
+        self.assertFalse(result['success'])
+        self.assertIn('error', result)
+        self.assertEqual(result['error'], "Unexpected error: Generic error")
+
+    @pytest.mark.timeout(30)
     def test_slack_service_invalid_token(self):
         """Test external API behavior with invalid token."""
         invalid_service = SlackService("invalid-token")
