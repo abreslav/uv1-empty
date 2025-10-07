@@ -66,7 +66,7 @@
         "methods_to_test_raw": "methods_to_test_raw.json",
         "methods_to_test": "methods_to_test.json",
         "test_reports": "test_reports.txt",
-        "change_request": "",
+        "change_request": "Any API request errors whould be logged",
         "implemented_change_requests": "implemented_change_requests.json"
     },
     "phase_manager": {
@@ -138,6 +138,10 @@
             {
                 "checkpoint": "{\"run\":{\"id\":\"45b0d668-ffae-43b8-9e2b-63012f8d6129\",\"kind\":\"change_request\"},\"phase_id\":\"Init\",\"additional_id\":null}",
                 "timestamp": "2025-10-07T17:00:49.909176+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"45b0d668-ffae-43b8-9e2b-63012f8d6129\",\"kind\":\"change_request\"},\"phase_id\":\"ProcessChangeRequest\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T17:00:49.937508+00:00"
             }
         ]
     }
