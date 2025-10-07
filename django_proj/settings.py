@@ -10,22 +10,45 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import dotenv_values
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def _read_config_parameter(param_name: str) -> str | None:
+    """
+    Read a configuration parameter from the .env.local file without mutating the current environment.
+    Note that it's important that the function reads the parameter from the .env.local file first,
+    and then from the environment variables.
+    Case-insensitive.
+    """
+    param_name = param_name.upper()
+    file = Path(".env.local")
+    env_map = dotenv_values(file) if file.exists() else {}
+    value_from_env_local = env_map.get(param_name)
+    value_from_env = os.getenv(param_name)
+    return value_from_env_local or value_from_env or None
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)g%lsr-&t$4v8$)dco-kjxi4pjyqet41f6io=o9_hln9fqws+b'
+SECRET_KEY = _read_config_parameter('SECRET_KEY') or 'django-insecure-)g%lsr-&t$4v8$)dco-kjxi4pjyqet41f6io=o9_hln9fqws+b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Read ALLOWED_HOSTS and CSRF_TRUSTED_ORIGINS from environment variables
+allowed_hosts_str = _read_config_parameter('ALLOWED_HOSTS')
+ALLOWED_HOSTS = allowed_hosts_str.split(',') if allowed_hosts_str else []
+
+csrf_trusted_origins_str = _read_config_parameter('CSRF_TRUSTED_ORIGINS')
+CSRF_TRUSTED_ORIGINS = csrf_trusted_origins_str.split(',') if csrf_trusted_origins_str else []
 
 
 # Application definition
@@ -72,12 +95,16 @@ WSGI_APPLICATION = 'django_proj.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+database_url = _read_config_parameter('DATABASE_URL')
+if database_url:
+    DATABASES = {'default': dj_database_url.config()}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
 
 
 # Password validation
@@ -115,6 +142,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
