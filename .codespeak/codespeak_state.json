@@ -150,6 +150,10 @@
             {
                 "checkpoint": "{\"run\":{\"id\":\"45b0d668-ffae-43b8-9e2b-63012f8d6129\",\"kind\":\"change_request\"},\"phase_id\":\"ImplementChangeRequest\",\"additional_id\":null}",
                 "timestamp": "2025-10-07T17:06:37.111928+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"45b0d668-ffae-43b8-9e2b-63012f8d6129\",\"kind\":\"change_request\"},\"phase_id\":\"Done\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T17:06:37.130259+00:00"
             }
         ]
     }
