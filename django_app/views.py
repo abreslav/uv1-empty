@@ -18,8 +18,8 @@ class HomeView(View):
         # Get stored tokens for the dropdown
         tokens = SlackToken.objects.filter(is_active=True)
 
-        # Get recent messages
-        recent_messages = SlackMessage.objects.all()[:20]
+        # Get recent messages (only original messages, not thread replies)
+        recent_messages = SlackMessage.objects.filter(is_thread_reply=False)[:20]
 
         context = {
             'tokens': tokens,
@@ -131,5 +131,52 @@ class PostMessageView(View):
 
         return redirect('home')
 
+
+class PostThreadReplyView(View):
+    """View for posting thread replies to Slack messages."""
+
+    def post(self, request):
+        token_id = request.POST.get('token_id')
+        channel_id = request.POST.get('channel_id')
+        thread_ts = request.POST.get('thread_ts')
+        reply_text = request.POST.get('reply_text', '').strip()
+
+        if not all([token_id, channel_id, thread_ts, reply_text]):
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('home')
+
+        try:
+            token = SlackToken.objects.get(id=token_id, is_active=True)
+        except SlackToken.DoesNotExist:
+            messages.error(request, 'Invalid token selected.')
+            return redirect('home')
+
+        # Get the original message for context
+        try:
+            original_message = SlackMessage.objects.get(message_ts=thread_ts)
+        except SlackMessage.DoesNotExist:
+            messages.error(request, 'Original message not found.')
+            return redirect('home')
+
+        slack_service = SlackService(token.token)
+        result = slack_service.post_thread_reply(channel_id, thread_ts, reply_text)
+
+        if result['success']:
+            # Store the thread reply in database
+            message_data = result['message']
+            SlackMessage.objects.create(
+                channel_id=channel_id,
+                channel_name=original_message.channel_name,
+                message_ts=message_data['ts'],
+                text=reply_text,
+                user_id=message_data.get('user', 'bot'),
+                thread_ts=thread_ts,
+                is_thread_reply=True,
+            )
+            messages.success(request, 'Thread reply posted successfully!')
+        else:
+            messages.error(request, f'Failed to post thread reply: {result["error"]}')
+
+        return redirect('home')
 
 

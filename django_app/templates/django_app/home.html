@@ -97,18 +97,85 @@
             Recent Activity
         </h2>
 
-        <div class="space-y-3 max-h-64 overflow-y-auto">
+        <div class="space-y-3 max-h-96 overflow-y-auto">
             {% for message in recent_messages %}
                 <div class="border-l-4 border-gray-300 pl-4 py-2">
                     <div class="text-sm font-medium text-gray-800">{{ message.channel_name }}</div>
-                    <div class="text-sm text-gray-600 mt-1">{{ message.text|truncatechars:100 }}</div>
+                    <div class="text-sm text-gray-600 mt-1">{{ message.text|truncatechars:150 }}</div>
                     <div class="text-xs text-gray-400 mt-1 flex items-center justify-between">
                         <span>{{ message.created_at|timesince }} ago</span>
+                        <button onclick="showReplyForm('{{ message.id }}', '{{ message.channel_id }}', '{{ message.message_ts }}', '{{ message.channel_name|escapejs }}', '{{ message.text|escapejs|truncatechars:50 }}')"
+                                class="text-slack-green hover:text-slack-green-dark text-xs px-2 py-1 rounded border border-slack-green hover:border-slack-green-dark transition duration-200">
+                            Reply in thread
+                        </button>
                     </div>
                 </div>
             {% empty %}
                 <p class="text-gray-500 text-sm text-center py-8">No recent messages</p>
             {% endfor %}
+        </div>
+    </div>
+
+    <!-- Thread Reply Modal -->
+    <div id="reply-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-lg max-w-md w-full">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Reply in Thread</h3>
+                        <button onclick="hideReplyForm()" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="mb-4 p-3 bg-gray-50 rounded-lg border-l-4 border-gray-300">
+                        <div class="text-sm font-medium text-gray-800" id="reply-channel-name"></div>
+                        <div class="text-sm text-gray-600 mt-1" id="reply-original-text"></div>
+                    </div>
+
+                    <form method="post" action="{% url 'post_thread_reply' %}" id="thread-reply-form">
+                        {% csrf_token %}
+                        <input type="hidden" id="reply-token-id" name="token_id" value="">
+                        <input type="hidden" id="reply-channel-id" name="channel_id" value="">
+                        <input type="hidden" id="reply-thread-ts" name="thread_ts" value="">
+
+                        <div class="space-y-4">
+                            <div>
+                                <label for="reply-token-select" class="block text-sm font-medium text-gray-700 mb-2">Select Token</label>
+                                <select id="reply-token-select" name="reply_token_select" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slack-green focus:border-transparent">
+                                    <option value="">Choose a token...</option>
+                                    {% for token in tokens %}
+                                        <option value="{{ token.id }}" {% if request.session.current_token_id == token.id %}selected{% endif %}>
+                                            {{ token.name }} ({{ token.team_name }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="reply-text" class="block text-sm font-medium text-gray-700 mb-2">Reply Text *</label>
+                                <textarea id="reply-text" name="reply_text" required rows="3"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slack-green focus:border-transparent"
+                                          placeholder="Type your reply here..."></textarea>
+                            </div>
+
+                            <div class="flex space-x-3">
+                                <button type="submit"
+                                        class="flex-1 bg-slack-green text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition duration-200 font-medium">
+                                    Send Reply
+                                </button>
+                                <button type="button" onclick="hideReplyForm()"
+                                        class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition duration-200 font-medium">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -187,6 +254,41 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-select token if there's one in session
     if (tokenSelect.value) {
         tokenSelect.dispatchEvent(new Event('change'));
+    }
+});
+
+// Thread reply modal functions
+function showReplyForm(messageId, channelId, threadTs, channelName, originalText) {
+    document.getElementById('reply-channel-id').value = channelId;
+    document.getElementById('reply-thread-ts').value = threadTs;
+    document.getElementById('reply-channel-name').textContent = channelName;
+    document.getElementById('reply-original-text').textContent = originalText;
+
+    // Set token from currently selected token if available
+    const currentToken = document.getElementById('token-select').value;
+    if (currentToken) {
+        document.getElementById('reply-token-select').value = currentToken;
+        document.getElementById('reply-token-id').value = currentToken;
+    }
+
+    // Update token_id when reply token selection changes
+    document.getElementById('reply-token-select').addEventListener('change', function() {
+        document.getElementById('reply-token-id').value = this.value;
+    });
+
+    document.getElementById('reply-modal').classList.remove('hidden');
+    document.getElementById('reply-text').focus();
+}
+
+function hideReplyForm() {
+    document.getElementById('reply-modal').classList.add('hidden');
+    document.getElementById('thread-reply-form').reset();
+}
+
+// Close modal when clicking outside
+document.getElementById('reply-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideReplyForm();
     }
 });
 </script>
