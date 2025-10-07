@@ -1,0 +1,358 @@
+{% extends 'django_app/base.html' %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Left Column: Token & Controls -->
+    <div class="space-y-6">
+        <!-- Add Token Section -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-slack-green" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Slack Access Token
+            </h2>
+
+            <form method="post" action="{% url 'add_token' %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Token Name (optional)</label>
+                    <input type="text" id="name" name="name"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slack-green focus:border-transparent"
+                           placeholder="My Slack Token">
+                </div>
+
+                <div>
+                    <label for="token" class="block text-sm font-medium text-gray-700 mb-2">Access Token *</label>
+                    <input type="text" id="token" name="token" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slack-green focus:border-transparent"
+                           placeholder="xoxb-your-token-here">
+                    <p class="text-xs text-gray-500 mt-1">Get your token from <a href="https://api.slack.com/apps" target="_blank" class="text-slack-green hover:underline">Slack API</a></p>
+                </div>
+
+                <button type="submit" class="w-full bg-slack-green text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition duration-200 font-medium">
+                    Add Token
+                </button>
+            </form>
+        </div>
+
+        <!-- Channel Selection & Message Posting -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-slack-yellow" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4v3c0 .6.4 1 1 1h.5c.2 0 .5-.1.7-.3l3.8-3.7H20c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+                </svg>
+                Post Message
+            </h2>
+
+            <div class="space-y-4">
+                <!-- Token Selection -->
+                <div>
+                    <label for="token-select" class="block text-sm font-medium text-gray-700 mb-2">Select Token</label>
+                    <select id="token-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slack-green focus:border-transparent">
+                        <option value="">Choose a token...</option>
+                        {% for token in tokens %}
+                            <option value="{{ token.id }}" {% if request.session.current_token_id == token.id %}selected{% endif %}>
+                                {{ token.name }} ({{ token.team_name }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Channel Selection -->
+                <div>
+                    <label for="channel-select" class="block text-sm font-medium text-gray-700 mb-2">Select Channel</label>
+                    <select id="channel-select" disabled class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slack-green focus:border-transparent bg-gray-100">
+                        <option value="">First select a token...</option>
+                    </select>
+                    <div id="loading-channels" class="hidden text-sm text-gray-500 mt-1">Loading channels...</div>
+                </div>
+
+                <!-- Message Form -->
+                <form method="post" action="{% url 'post_message' %}" id="message-form" class="space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" id="selected-token" name="token_id" value="">
+                    <input type="hidden" id="selected-channel" name="channel_id" value="">
+                    <input type="hidden" id="selected-channel-name" name="channel_name" value="">
+
+                    <div>
+                        <label for="message-text" class="block text-sm font-medium text-gray-700 mb-2">Message Text *</label>
+                        <textarea id="message-text" name="message_text" required rows="4"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slack-green focus:border-transparent"
+                                  placeholder="Type your message here..."></textarea>
+                    </div>
+
+                    <button type="submit" id="send-message-btn" disabled
+                            class="w-full bg-slack-green text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition duration-200 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Reply to Thread Section -->
+        <div class="bg-white rounded-lg shadow-md p-6" id="reply-section" style="display: none;">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-slack-red" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/>
+                </svg>
+                Reply to Thread
+            </h2>
+
+            <form method="post" action="{% url 'post_reply' %}" id="reply-form" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" id="reply-token" name="token_id" value="">
+                <input type="hidden" id="reply-channel" name="channel_id" value="">
+                <input type="hidden" id="reply-channel-name" name="channel_name" value="">
+                <input type="hidden" id="reply-thread-ts" name="thread_ts" value="">
+
+                <div>
+                    <p class="text-sm text-gray-600 mb-2">Replying to message:</p>
+                    <div id="original-message" class="bg-gray-50 p-3 rounded-md border-l-4 border-slack-green text-sm"></div>
+                </div>
+
+                <div>
+                    <label for="reply-text" class="block text-sm font-medium text-gray-700 mb-2">Reply Text *</label>
+                    <textarea id="reply-text" name="reply_text" required rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slack-green focus:border-transparent"
+                              placeholder="Type your reply here..."></textarea>
+                </div>
+
+                <div class="flex space-x-3">
+                    <button type="submit" class="flex-1 bg-slack-red text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition duration-200 font-medium">
+                        Send Reply
+                    </button>
+                    <button type="button" id="cancel-reply" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition duration-200 font-medium">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Recent Messages & Channel History -->
+    <div class="space-y-6">
+        <!-- Channel Messages -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-slack-purple" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                Channel Messages
+            </h2>
+
+            <div id="channel-messages" class="space-y-3 max-h-96 overflow-y-auto">
+                <p class="text-gray-500 text-sm text-center py-8">Select a channel to view messages</p>
+            </div>
+
+            <button id="refresh-messages" class="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-md transition duration-200 font-medium" style="display: none;">
+                Refresh Messages
+            </button>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                </svg>
+                Recent Activity
+            </h2>
+
+            <div class="space-y-3 max-h-64 overflow-y-auto">
+                {% for message in recent_messages %}
+                    <div class="border-l-4 border-gray-300 pl-4 py-2">
+                        <div class="text-sm font-medium text-gray-800">{{ message.channel_name }}</div>
+                        <div class="text-sm text-gray-600 mt-1">{{ message.text|truncatechars:100 }}</div>
+                        <div class="text-xs text-gray-400 mt-1 flex items-center justify-between">
+                            <span>{{ message.created_at|timesince }} ago</span>
+                            {% if message.thread_ts %}
+                                <span class="bg-slack-purple text-white px-2 py-1 rounded text-xs">Reply</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-500 text-sm text-center py-8">No recent messages</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tokenSelect = document.getElementById('token-select');
+    const channelSelect = document.getElementById('channel-select');
+    const loadingChannels = document.getElementById('loading-channels');
+    const selectedToken = document.getElementById('selected-token');
+    const selectedChannel = document.getElementById('selected-channel');
+    const selectedChannelName = document.getElementById('selected-channel-name');
+    const sendMessageBtn = document.getElementById('send-message-btn');
+    const channelMessages = document.getElementById('channel-messages');
+    const refreshMessagesBtn = document.getElementById('refresh-messages');
+    const replySection = document.getElementById('reply-section');
+    const replyForm = document.getElementById('reply-form');
+    const cancelReplyBtn = document.getElementById('cancel-reply');
+
+    // Token selection change
+    tokenSelect.addEventListener('change', function() {
+        const tokenId = this.value;
+        selectedToken.value = tokenId;
+
+        if (tokenId) {
+            // Load channels
+            channelSelect.disabled = true;
+            channelSelect.innerHTML = '<option value="">Loading channels...</option>';
+            loadingChannels.classList.remove('hidden');
+
+            fetch(`/channels/?token_id=${tokenId}`)
+                .then(response => response.json())
+                .then(data => {
+                    loadingChannels.classList.add('hidden');
+                    channelSelect.innerHTML = '<option value="">Choose a channel...</option>';
+
+                    if (data.success) {
+                        data.channels.forEach(channel => {
+                            const option = document.createElement('option');
+                            option.value = channel.id;
+                            option.textContent = channel.name;
+                            option.dataset.channelName = channel.name;
+                            channelSelect.appendChild(option);
+                        });
+                        channelSelect.disabled = false;
+                    } else {
+                        channelSelect.innerHTML = `<option value="">Error: ${data.error}</option>`;
+                    }
+                })
+                .catch(error => {
+                    loadingChannels.classList.add('hidden');
+                    channelSelect.innerHTML = '<option value="">Error loading channels</option>';
+                    console.error('Error:', error);
+                });
+        } else {
+            channelSelect.innerHTML = '<option value="">First select a token...</option>';
+            channelSelect.disabled = true;
+            sendMessageBtn.disabled = true;
+        }
+
+        // Clear channel messages
+        channelMessages.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">Select a channel to view messages</p>';
+        refreshMessagesBtn.style.display = 'none';
+    });
+
+    // Channel selection change
+    channelSelect.addEventListener('change', function() {
+        const channelId = this.value;
+        const channelName = this.options[this.selectedIndex]?.dataset?.channelName || '';
+
+        selectedChannel.value = channelId;
+        selectedChannelName.value = channelName;
+        sendMessageBtn.disabled = !channelId;
+
+        if (channelId && selectedToken.value) {
+            loadChannelMessages(selectedToken.value, channelId);
+            refreshMessagesBtn.style.display = 'block';
+        } else {
+            channelMessages.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">Select a channel to view messages</p>';
+            refreshMessagesBtn.style.display = 'none';
+        }
+    });
+
+    // Refresh messages
+    refreshMessagesBtn.addEventListener('click', function() {
+        if (selectedToken.value && selectedChannel.value) {
+            loadChannelMessages(selectedToken.value, selectedChannel.value);
+        }
+    });
+
+    // Cancel reply
+    cancelReplyBtn.addEventListener('click', function() {
+        replySection.style.display = 'none';
+    });
+
+    // Load channel messages
+    function loadChannelMessages(tokenId, channelId) {
+        channelMessages.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">Loading messages...</p>';
+
+        fetch(`/messages/?token_id=${tokenId}&channel_id=${channelId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.messages.length === 0) {
+                        channelMessages.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">No messages found</p>';
+                        return;
+                    }
+
+                    channelMessages.innerHTML = '';
+                    data.messages.forEach(message => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'border rounded-lg p-3 hover:bg-gray-50 transition duration-150';
+
+                        const hasReplies = message.reply_count > 0;
+
+                        messageDiv.innerHTML = `
+                            <div class="text-sm text-gray-800">${escapeHtml(message.text)}</div>
+                            <div class="text-xs text-gray-500 mt-2 flex items-center justify-between">
+                                <span>Timestamp: ${message.ts}</span>
+                                <div class="flex items-center space-x-2">
+                                    ${hasReplies ? `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${message.reply_count} replies</span>` : ''}
+                                    <button class="reply-btn text-slack-green hover:text-slack-green-dark text-xs font-medium"
+                                            data-ts="${message.ts}"
+                                            data-text="${escapeHtml(message.text)}"
+                                            data-channel-id="${channelId}"
+                                            data-channel-name="${channelName}">
+                                        Reply
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+
+                        channelMessages.appendChild(messageDiv);
+                    });
+
+                    // Add reply button event listeners
+                    document.querySelectorAll('.reply-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const ts = this.dataset.ts;
+                            const text = this.dataset.text;
+                            const channelId = this.dataset.channelId;
+                            const channelName = this.dataset.channelName;
+
+                            // Fill reply form
+                            document.getElementById('reply-token').value = selectedToken.value;
+                            document.getElementById('reply-channel').value = channelId;
+                            document.getElementById('reply-channel-name').value = channelName;
+                            document.getElementById('reply-thread-ts').value = ts;
+                            document.getElementById('original-message').textContent = text;
+
+                            // Show reply section
+                            replySection.style.display = 'block';
+                            replySection.scrollIntoView({ behavior: 'smooth' });
+                        });
+                    });
+
+                } else {
+                    channelMessages.innerHTML = `<p class="text-red-500 text-sm text-center py-8">Error: ${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                channelMessages.innerHTML = '<p class="text-red-500 text-sm text-center py-8">Error loading messages</p>';
+                console.error('Error:', error);
+            });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Auto-select token if there's one in session
+    if (tokenSelect.value) {
+        tokenSelect.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+{% endblock %}
