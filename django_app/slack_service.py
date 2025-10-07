@@ -1,9 +1,12 @@
 """
 Slack API service utility for handling interactions with Slack API.
 """
+import logging
 from typing import List, Dict, Optional, Any
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
+
+logger = logging.getLogger(__name__)
 
 
 class SlackService:
@@ -23,9 +26,16 @@ class SlackService:
                 'data': response.data
             }
         except SlackApiError as e:
+            logger.error(f"Slack API error during auth test: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error during auth test: {str(e)}")
+            return {
+                'success': False,
+                'error': f"Unexpected error: {str(e)}"
             }
 
     def get_channels(self) -> Dict[str, Any]:
@@ -71,10 +81,16 @@ class SlackService:
 
             # Add DMs
             for dm in dms['channels']:
-                user_info = self.client.users_info(user=dm['user'])
+                try:
+                    user_info = self.client.users_info(user=dm['user'])
+                    name = f"@{user_info['user']['real_name'] or user_info['user']['name']}"
+                except SlackApiError as e:
+                    logger.warning(f"Failed to get user info for user {dm['user']}: {str(e)}")
+                    name = f"@user_{dm['user']}"
+
                 all_channels.append({
                     'id': dm['id'],
-                    'name': f"@{user_info['user']['real_name'] or user_info['user']['name']}",
+                    'name': name,
                     'type': 'im',
                     'is_member': True
                 })
@@ -84,9 +100,16 @@ class SlackService:
                 'channels': all_channels
             }
         except SlackApiError as e:
+            logger.error(f"Slack API error during get_channels: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error during get_channels: {str(e)}")
+            return {
+                'success': False,
+                'error': f"Unexpected error: {str(e)}"
             }
 
     def post_message(self, channel_id: str, text: str) -> Dict[str, Any]:
@@ -101,9 +124,16 @@ class SlackService:
                 'message': response.data
             }
         except SlackApiError as e:
+            logger.error(f"Slack API error during post_message to channel {channel_id}: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error during post_message to channel {channel_id}: {str(e)}")
+            return {
+                'success': False,
+                'error': f"Unexpected error: {str(e)}"
             }
 
     def post_reply(self, channel_id: str, thread_ts: str, text: str) -> Dict[str, Any]:
@@ -119,9 +149,16 @@ class SlackService:
                 'message': response.data
             }
         except SlackApiError as e:
+            logger.error(f"Slack API error during post_reply to channel {channel_id}, thread {thread_ts}: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error during post_reply to channel {channel_id}, thread {thread_ts}: {str(e)}")
+            return {
+                'success': False,
+                'error': f"Unexpected error: {str(e)}"
             }
 
     def get_channel_history(self, channel_id: str, limit: int = 10) -> Dict[str, Any]:
@@ -148,7 +185,14 @@ class SlackService:
                 'messages': messages
             }
         except SlackApiError as e:
+            logger.error(f"Slack API error during get_channel_history for channel {channel_id}: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)
+            }
+        except Exception as e:
+            logger.error(f"Unexpected error during get_channel_history for channel {channel_id}: {str(e)}")
+            return {
+                'success': False,
+                'error': f"Unexpected error: {str(e)}"
             }

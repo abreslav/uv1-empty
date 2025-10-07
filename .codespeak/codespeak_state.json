@@ -134,6 +134,26 @@
             {
                 "checkpoint": "{\"run\":{\"id\":\"5151dae0-72e3-4738-a6e3-3834e5c42b7d\",\"kind\":\"change_request\"},\"phase_id\":\"Done\",\"additional_id\":null}",
                 "timestamp": "2025-10-07T16:58:43.393919+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"45b0d668-ffae-43b8-9e2b-63012f8d6129\",\"kind\":\"change_request\"},\"phase_id\":\"Init\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T17:00:49.909176+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"45b0d668-ffae-43b8-9e2b-63012f8d6129\",\"kind\":\"change_request\"},\"phase_id\":\"ProcessChangeRequest\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T17:00:49.937508+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"45b0d668-ffae-43b8-9e2b-63012f8d6129\",\"kind\":\"change_request\"},\"phase_id\":\"CheckChangeRequestsContradictions\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T17:00:53.693358+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"45b0d668-ffae-43b8-9e2b-63012f8d6129\",\"kind\":\"change_request\"},\"phase_id\":\"ImplementChangeRequest\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T17:06:37.111928+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"45b0d668-ffae-43b8-9e2b-63012f8d6129\",\"kind\":\"change_request\"},\"phase_id\":\"Done\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T17:06:37.130259+00:00"
             }
         ]
     }
