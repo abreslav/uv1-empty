@@ -39,12 +39,19 @@
         },
         "version": "0.2.0"
     },
-    "phases_state": {},
+    "phases_state": {
+        "spec_file": "spec/main.cs.md",
+        "spec": "spec.processed.md"
+    },
     "phase_manager": {
         "history": [
             {
                 "checkpoint": "{\"run\":{\"id\":\"989dbcab-480f-4fec-a36c-2d713eaa134a\",\"kind\":\"build\"},\"phase_id\":\"Init\",\"additional_id\":null}",
                 "timestamp": "2025-10-07T16:31:33.173708+00:00"
+            },
+            {
+                "checkpoint": "{\"run\":{\"id\":\"989dbcab-480f-4fec-a36c-2d713eaa134a\",\"kind\":\"build\"},\"phase_id\":\"ProcessSpec\",\"additional_id\":null}",
+                "timestamp": "2025-10-07T16:31:33.185478+00:00"
             }
         ]
     }
